@@ -1,0 +1,226 @@
+1. PENGENALAN NODEJS DATABASE
+
+2. PENGENALAN OBJECT RELATIONAL MAPPING
+konsep ORM => membuat representasi object di aplikasi yang merepresentasikan data (table) di database
+Kode => ORM => Driver (Database Package Library) => Database
+
+3. PENGENALAN PRISMA
+Komponen Prisma => Schema, Client, Migrate, CLI, Studio, Introspection
+
+4. MEMBUAT PROJECT
+npm init & type module
+npm install --save-dev jest @types/jest
+npm install --save-dev babel-jest @babel/preset-env
+
+5. MENGINSTALL PRISMA
+npm install prisma --save-dev
+npx prisma
+npx prisma init
+
+6. DATABASE CONNECTION
+secara default prisma menggunakan koneksi database PostgreSQL
+https://www.prisma.io/docs/orm/overview/databases
+provider = "mysql"
+DATABASE_URL="mysql://root:nfr123@localhost:3306/belajar_nodejs_database"
+
+7. GENERATE
+prisma melakukan generate kode dari schema yang dibuat
+setiap melakukan perubahan kode di file chema prisma, harus melakukan npx prisma generate
+
+// membuat table
+database.sql
+
+// schema.prisma
+model sample {
+  id String @id
+  name String
+}
+
+npx prisma generate
+nanti prisma client akan digenerate oleh prisma, gunakan? => import
+kode kita yang auto generate dan modelnya ada di node_modules .prisma client
+
+8. PRISMA CLIENT
+prisma-client.test.js
+komponen utama fitur ORM
+hasil generate langkah tadi
+otomatis membaca data dari environment file .env & informasi koneksi database dari prisma schema file
+
+const prisma = new PrismaClient();
+hanya dibuat sekali
+prisma-client.js
+// bisa konfigurasi di constructor & env
+
+9. TAG FUNCTION
+tag-function.test.js
+agar lebih aman dari SQL Injection
+
+10. EXECUTE SQL
+execute-sql.test.js
+$executeRaw() => INSERT, UPDATE, DELETE // return Promise<Number> yang berisi jumlah data yang terkena impact dari operasi SQL
+
+11. QUERY SQL
+$queryRaw() => SELECT // return Promise<Array> yang berisikan data hasil query
+
+12. PRISMA ORM
+jarang pakai Raw 
+
+13. MODEL
+membuat table kita perlu membuat model di Prisma
+membuat model di file prisma schema
+agar nama table berbeda dengan model  => @@map("customers")
+bisa null                             => ?
+primary key                           => @id
+setelah mengubah model => npx prisma generate // untuk generate Prisma Client
+
+menambahkan model Customer
+membuat table customers di mysql
+npx prisma generate
+
+14. CRUD
+crud.test.js
+Prisma Client otomatis memilii field dengan nama model dalam lowercase
+// misal model Customer maka PrismaClient.customer yang merupakan Prisma Model Query (cek dokumentasi)
+
+findUnique => harus kolom yang unique
+
+15. TRANSACTION
+transaction.test.js
+$transaction()
+
+Sequential Transaction    => kirim semua operasi Prisma Client sebagai array
+Interactive Transaction   => menggunakan callback function yang berisi kode transaksi
+
+bisa mengubah pengaturan transaksionalnya setelah array atau callback
+{
+  timeout: 5
+}
+
+16. CRUD MANY
+otomatis insert beberapa dengan transaksi
+
+count => jumlah data yang berhasil Insert
+
+// Insert Many
+
+// Update Many
+single update harus unique kolom kalau update many bebas di kolom apapun karena bisa berdampak ke banyak data
+
+// Delete Many
+single delete harus unique kolom kalau delete many bebas di kolom apapun karena bisa berdampak ke banyak data
+
+// Read Many
+
+17. PAGING
+paging.test.js
+findMany() mendukung parameter skip & take
+take  => jumlah maksimal data yang diambil
+skip  => jumlah data yang akan di-skip di awal
+
+18. SORTING
+sorting.test.js
+findMany() memiliki orderBy bisa asc atau desc
+
+19. SELECT FIELDS
+select-fields.test.js
+agar tidak semua field di-SELECT
+
+20. COUNT
+count.test.js
+
+21. AGGREGATE
+aggregate.test.js
+method aggregate
+CREATE TABLE products
+(
+	id VARCHAR(100) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    price INT NOT NULL,
+    stock INT NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    PRIMARY KEY (id)
+) ENGINE = InnoDB;
+buat model
+npx prisma generate
+bisa groupBy()
+
+22. WHERE CONDITION & OPERATOR
+where.test.js
+in, not, equals, lte, lt, contains, AND, OR, dan lainnya.
+
+23. PRISMA SCHEMA
+berisikan informasi tentang database yang digunakan oleh Prisma Client dari koneksi hingga model data
+hal ini digunakan untuk generate kode Prisma Client
+
+// Model
+minimal 1 kolom unique
+PascalCase
+
+// Tipe Data
+? untuk tipe data yang bisa null
+disamakan dengan tipe data database
+
+// Model Attribute
+@@map(), @id, @@id, @default
+
+// Enum
+
+24. AUTO INCREMENT
+
+25. ONE TO ONE RELATIONSHIP
+buat table beserta constraintnya
+buat model Wallet & Customer
+pakai @relation di Wallet dengan customer_id references id
+di Customer => wallet Wallet?
+
+di relasi tidak menggunakan select tetapi include, customer akan ikut ada
+
+customer create dengan wallet create + include wallet jika hasil selectnya ingin diikutkan
+
+customer findUnique bisa menggunakan include wallet agar ikut ter-select
+
+// Relation Operator
+customer where wallet isNot null
+
+26. ONE TO MANY RELATIONSHIP
+buat table comments dengan foreign key ke customer id & insert beberapa data
+
+// di Model
+relation Comment sama saja, Customer ada comments Comment[]
+
+bisa buat Customer dengan many Comments
+
+bisa cari customer lewat comments
+
+27. MANY TO MANY
+buat table penghubung, misal table Likes untuk customers &  products
+
+// Model
+Customer ada likes Like[]
+Product ada likedBy like[]
+Like ada customer @relation & product @relation => @@id([customer_id, product_id])
+
+like create customer_id & product_id beserta include
+customer find => include likes => include product: true
+
+// Implicit
+implicit many to many agar kita tidak perlu menyebutkan model penghubungnya
+harus pakai _penghubung dan nama kolom A B
+
+28. PRISMA MIGRATE
+Model-first Migration
+Database-first Migration
+
+29. MODEL-FIRST MIGRATION
+npx prisma migrate dev --create-only --name nama_migration // kita review dulu
+npx prisma migrate dev
+
+Model Ke SQL
+
+30. DATABASE-FIRST MIGRATION
+npx prisma db pull
+dari database ke model
+
+31. PRISMA STUDIO
+npx prisma studio
+port => 5555
